@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VocabMaster - Smart English Vocabulary Learning</title>
+    <link rel="stylesheet" href="style.css?v=20260905_1338">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body data-theme="light">
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-fixed-header" style="display: flex; justify-content: space-between; align-items: center; height: 64px; padding: 0 16px;">
+                <h2 style="margin: 0; font-size: 18px;">⚡ VocabMaster</h2>
+                <span style="font-size: 11px; font-style: italic; font-weight: 800; color: #ef4444; background: rgba(239, 68, 68, 0.12); padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.25); white-space: nowrap;">Target: 8.5 IELTS</span>
+            </div>
+
+            <div class="sidebar-scrollable-content">
+                <!-- Level & Streak Card at TOP of Sidebar -->
+                <div class="stats-card gamification-sidebar-card" style="border-color: rgba(99, 102, 241, 0.3); background: rgba(99, 102, 241, 0.08);">
+                    <h4 style="color: var(--accent-color);">🏆 Level & Streak</h4>
+                    <div class="level-badge-row" style="display:flex; justify-content:space-between; font-size:13px; font-weight:700;">
+                        <span id="sideLevelTitle" style="color: var(--accent-color);">Level 3</span>
+                        <span id="sideXpTitle" style="color: var(--warning-color);">300 / 400 XP</span>
+                    </div>
+                    <div class="progress-bar-bg" style="margin: 6px 0 10px 0;">
+                        <div class="progress-bar-fill" id="sideLevelBar" style="width: 75%; background: linear-gradient(90deg, #f59e0b, #ec4899);"></div>
+                    </div>
+
+                    <!-- Today's Score Box (Target: 50 pts) -->
+                    <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); padding: 10px 12px; border-radius: 10px; margin-bottom: 10px;">
+                        <div style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">
+                            📅 <span id="sideDateText">Date: Realtime</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+                            <span>Today's Score:</span>
+                            <b id="sideTodayScore" style="color: var(--accent-color); font-size: 14px;">0/50</b>
+                        </div>
+                        <div class="progress-bar-bg" style="height: 6px; margin-top: 6px;">
+                            <div class="progress-bar-fill" id="sideTodayProgressBar" style="width: 0%; background: var(--accent-gradient);"></div>
+                        </div>
+                        <div id="sideGoalStatus" style="font-size: 11px; margin-top: 4px; font-weight: 600; text-align: right; color: var(--text-secondary);">
+                            Target: 50 pts
+                        </div>
+                    </div>
+
+                    <div class="stats-details" style="flex-direction:column; gap:6px;">
+                        <div>🔥 Daily Break: <b id="sideStreak" style="color:var(--danger-color);">3 days</b></div>
+                        <div>📆 Days Learned: <b id="sideTotalDays" style="color:var(--success-color);">3 Days</b></div>
+                    </div>
+                </div>
+                
+                <nav class="nav-menu">
+                    <button class="nav-btn active" data-tab="flashcardsTab" onclick="switchTab('flashcardsTab')">🎴 Flashcards</button>
+                    <button class="nav-btn" data-tab="quizTab" onclick="switchTab('quizTab')">🎯 Quiz Mode</button>
+                    <button class="nav-btn" data-tab="writeTab" onclick="switchTab('writeTab')">✍️ Write Practice</button>
+                    <button class="nav-btn" data-tab="reportTab" onclick="switchTab('reportTab')">📊 Study Report</button>
+                    <button class="nav-btn" data-tab="tableTab" onclick="switchTab('tableTab')">📖 Vocab Table</button>
+                    <button class="nav-btn" data-tab="exportTab" onclick="switchTab('exportTab')">📥 Export Anki</button>
+                </nav>
+
+                <div class="article-selector-box">
+                    <label for="articleSelect">Select Article:</label>
+                    <select id="articleSelect" class="styled-select">
+                        <option value="">-- Chưa có bài đọc (Hãy Import .MD) --</option>
+                    </select>
+                    
+                    <!-- Action Row 1: File Import & Manual Text Paste -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                        <input type="file" id="mdFileInput" accept=".md,.txt" style="display: none;" onchange="handleFileUpload(event)">
+                        <label for="mdFileInput" class="btn-primary" style="padding: 10px 6px; font-size: 12px; font-weight: 800; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center;">📁 Import File</label>
+                        <button type="button" id="openManualInputBtn" class="btn-secondary" style="padding: 10px 6px; font-size: 12px; font-weight: 800; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.4); cursor: pointer; text-align: center;" onclick="openManualInputModal()">✍️ Paste Text</button>
+                    </div>
+
+                    <!-- Action Row 2: Web Server Directory & Delete Selected -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
+                        <button type="button" id="openLibraryWebBtn" class="btn-secondary" style="padding: 10px 6px; font-size: 12px; font-weight: 800; background: rgba(99, 102, 241, 0.15); color: var(--accent-color); border: 1px solid rgba(99, 102, 241, 0.4); cursor: pointer; text-align: center;" onclick="openWebFolderLibraryModal()">📂 Library Web</button>
+                        <button type="button" id="deleteArticleBtn" class="btn-secondary" style="padding: 10px 6px; font-size: 12px; font-weight: 800; background: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.3); cursor: pointer; text-align: center;">🗑️ Delete</button>
+                    </div>
+
+                    <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <button type="button" id="deleteAllArticlesBtn" style="background: transparent; border: none; color: #ef4444; font-size: 11px; font-weight: 700; cursor: pointer; text-decoration: underline; padding: 2px 0;">🔥 Delete All Topics</button>
+                        <button type="button" id="restoreArticlesBtn" style="background: transparent; border: none; color: var(--primary-color); font-size: 11px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 2px 0;">🔄 Restore Topics</button>
+                    </div>
+                </div>
+
+                <div class="theme-toggle-box">
+                    <button id="themeToggleBtn" class="btn-icon">☀️ / 🌙 Theme Toggle</button>
+                </div>
+
+                <!-- Google / Gmail Auth & Realtime Cloud Sync Box -->
+                <div class="google-auth-box" style="margin-top: 12px; padding: 12px; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-md);">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--accent-color); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                        <span>🔑 Gmail Cloud Sync</span>
+                        <span id="cloudStatusBadge" style="font-size: 10px; padding: 2px 6px; border-radius: 10px; background: rgba(148, 163, 184, 0.2); color: var(--text-secondary);">Local</span>
+                    </div>
+
+                    <!-- Signed Out View -->
+                    <div id="googleSignedOutState">
+                        <button id="googleSignInBtn" onclick="signInWithGoogle()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 10px; background: #ffffff; color: #374151; border: 1px solid #cbd5e1; border-radius: var(--radius-sm); font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.2s ease;">
+                            <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                            Đăng nhập bằng Google
+                        </button>
+                    </div>
+
+                    <!-- Signed In View -->
+                    <div id="googleSignedInState" style="display: none;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <img id="userAvatarImg" src="" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--accent-color);" alt="Avatar">
+                            <div style="flex: 1; overflow: hidden;">
+                                <div id="userNameText" style="font-size: 12px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">User Name</div>
+                                <div id="userEmailText" style="font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">user@gmail.com</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button onclick="manualSyncToCloud()" class="btn-secondary" style="flex: 1; padding: 4px 6px; font-size: 11px; font-weight: 600; color: var(--success-color); border-color: rgba(16, 185, 129, 0.4); cursor: pointer;">☁️ Sync Cloud</button>
+                            <button onclick="signOutGoogle()" class="btn-secondary" style="padding: 4px 8px; font-size: 11px; font-weight: 600; color: var(--danger-color); border-color: rgba(239, 68, 68, 0.4); cursor: pointer;">🚪 Thoát</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1-Click Sync PC & Mobile Box -->
+                <div class="cloud-sync-box" style="margin-top: 10px; padding: 12px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md);">
+                    <div style="font-size: 12px; font-weight: 700; color: var(--success-color); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                        <span>🔄 Đồng Bộ PC & Điện Thoại</span>
+                    </div>
+                    <button onclick="forceSyncPcAndMobile()" style="width: 100%; margin-bottom: 6px; padding: 7px; font-size: 11.5px; font-weight: 800; background: var(--accent-gradient); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; box-shadow: 0 2px 8px rgba(99,102,241,0.25);">⚡ Đồng Bộ Trực Tiếp Ngay</button>
+                    <div style="display: flex; gap: 6px;">
+                        <button id="exportSyncBtn" class="btn-secondary" style="flex: 1; padding: 6px; font-size: 11px; font-weight: 700; color: var(--success-color); border-color: rgba(16, 185, 129, 0.4); cursor: pointer;" onclick="exportFullProgressBackup()" title="Xuất toàn bộ tiến độ Level, Streak, Từ thuộc">📤 Xuất File</button>
+                        <button id="importSyncBtn" class="btn-secondary" style="flex: 1; padding: 6px; font-size: 11px; font-weight: 700; color: var(--accent-color); border-color: rgba(99, 102, 241, 0.4); cursor: pointer;" onclick="triggerProgressRestore()" title="Nhập file dữ liệu">📥 Nhập File</button>
+                    </div>
+                    <input type="file" id="syncFileInput" accept=".json" style="display: none;" onchange="importFullProgressBackup(event)">
+                </div>
+
+                <!-- Footer App Metadata -->
+                <div class="sidebar-footer-info" style="margin-top: 14px; padding: 10px 12px; background: rgba(99, 102, 241, 0.05); border: 1px dashed rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); font-size: 10.5px; font-style: italic; color: var(--text-secondary); line-height: 1.6;">
+                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📅 <i>Build Date: 30-Aug-2026</i></div>
+                    <div id="realTimeUpdateFooter" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">🕒 <i>Updated: Realtime</i></div>
+                    <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">✍️ <i>Authored: Tuan Doan</i></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Zalo In-App Browser Warning Banner -->
+            <div id="zaloWarningBanner" style="display: none; background: #ef4444; color: #ffffff; text-align: center; padding: 12px 16px; font-size: 13px; font-weight: 800; border-bottom: 2px solid #b91c1c; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 99999999;">
+                ⚠️ Bạn đang mở ứng dụng bên trong trình duyệt Zalo! <br/>👉 Hãy bấm dấu <b>3 chấm (⋮)</b> góc trên bên phải ➔ Chọn <b>"Mở bằng trình duyệt"</b> (Chrome/Safari) để không bị đơ trình duyệt!
+            </div>
+
+            <!-- Global Fixed Top Bar -->
+            <header class="global-fixed-bar">
+                <div class="bar-left" style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+                    <button id="globalShuffleBtn" class="btn-action" style="background: var(--accent-gradient); color: #fff; border: none; padding: 6px 12px; border-radius: var(--radius-md); font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0;" onclick="shuffleAllModes(true)" title="Shuffle vocabulary across all modes">🔀 Shuffle Words</button>
+                </div>
+                <div class="bar-timers" style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow: hidden;">
+                    <span class="timer-chip" style="font-size: 12px; padding: 4px 10px; white-space: nowrap;">🏆 <b id="topLevelText">Level 3</b></span>
+                    <span class="timer-chip" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3); font-size: 12px; padding: 4px 10px; white-space: nowrap;">⭐ Score: <b id="topScoreText" style="color: var(--warning-color);">300</b></span>
+                    <span class="timer-chip" style="font-size: 12px; padding: 4px 10px; white-space: nowrap;">🕒 <b id="currentTimeClock">00:00:00</b></span>
+                    <span class="timer-chip" style="font-size: 12px; padding: 4px 10px; white-space: nowrap;">⏳ <b id="timeLearnedClock">00m 00s</b></span>
+                </div>
+            </header>
+            <div class="scrollable-content-body">
+                <!-- TAB 1: FLASHCARDS -->
+                <section id="flashcardsTab" class="tab-content active">
+                    <div class="top-bar">
+                        <div class="deck-info">
+                            <h2 id="currentDeckTitle" style="font-size: 20px;">The Journey Home of the Buddha's Lost Eyes</h2>
+                            <span class="badge" id="cardCounter">Card 1 of 55</span>
+                        </div>
+                        <div class="deck-controls">
+                            <button id="shuffleBtn" class="btn-action" onclick="shuffleAllModes(true)">🔀 Shuffle Cards</button>
+                            <button id="filterUnmasteredBtn" class="btn-action">⚠️ Review Only</button>
+                        </div>
+                    </div>
+
+                    <div class="flashcard-container">
+                        <div class="flashcard" id="flashcard">
+                            <!-- Card Front -->
+                            <div class="card-face card-front">
+                                <span class="card-status-tag" id="cardStatusTag">New</span>
+                                <div class="word-main" id="frontWord">happen to do sth</div>
+                                <div class="phonetic" id="frontPhonetic">/ˈhæp.ən tə duː/</div>
+                                <button class="audio-btn" id="speakBtnFront" title="Listen">🔊 Listen</button>
+                                <div class="card-hint">👇 Click or press [Space] to flip</div>
+                            </div>
+
+                            <!-- Card Back -->
+                            <div class="card-face card-back">
+                                <div class="back-header">
+                                    <div class="back-word" id="backWord">happen to do sth</div>
+                                    <div class="back-meaning" id="backMeaning">🇻🇳 Tình cờ làm gì</div>
+                                    <div class="back-english-def" id="backEnglishDef" style="font-size: 14px; color: var(--accent-color); margin-top: 4px; font-weight: 600;">It occurs by chance when someone does something unexpectedly</div>
+                                    <div class="back-synonyms" id="backSynonyms" style="font-size: 13px; color: var(--warning-color); font-weight: 600; margin-top: 3px;">(chance to do sth / occur to do sth)</div>
+                                </div>
+                                <hr class="divider">
+                                <div class="example-section">
+                                    <div class="section-title">📌 Sample Sentence (SVO):</div>
+                                    <p class="sentence-en" id="backSentence">In 2006, during a business trip to Datong, Tian Yijun happened to stop by a flea market.</p>
+                                    <p class="sentence-vi" id="backTranslation">Năm 2006, trong một chuyến công tác đến Đại Đồng, tỉnh Sơn Tây, Trung Quốc, Tian Yijun tình cờ ghé vào một khu chợ trời.</p>
+                                </div>
+                                <div class="grammar-section">
+                                    <div class="section-title">💡 Grammar Notes:</div>
+                                    <p class="grammar-text" id="backGrammar">Quá khứ đơn; cấu trúc happen + to-V chỉ hành động xảy ra ngẫu nhiên.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Controls -->
+                    <div class="flashcard-actions">
+                        <button id="prevCardBtn" class="btn-nav">⬅️ Previous</button>
+                        <div class="mastery-buttons">
+                            <button id="markNeedsReviewBtn" class="btn-status review">🔴 Needs Review</button>
+                            <button id="markMasteredBtn" class="btn-status master">🟢 Mastered</button>
+                        </div>
+                        <button id="nextCardBtn" class="btn-nav">Next ➡️</button>
+                    </div>
+                </section>
+
+                <!-- TAB 2: QUIZ & ACTIVE RECALL -->
+                <section id="quizTab" class="tab-content">
+                    <div class="quiz-header" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div>
+                            <h2 style="margin: 0;">🎯 Active Recall Quiz</h2>
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Practice active recall with 4-choice questions or fill-in sentences.</div>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                            <button class="btn-action" onclick="shuffleAllModes(true)" style="background: var(--accent-gradient); color: #fff; font-weight: 700; border: none; padding: 6px 14px; border-radius: var(--radius-md); cursor: pointer;">🔀 Shuffle Quiz</button>
+                            <div class="quiz-score-badge" style="display:flex; align-items:center; gap:12px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.25); padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 14px;">
+                                <span style="color: var(--success-color);">🏆 Correct: <b id="quizTabScoreText" style="color: var(--text-primary);">0</b> (+1)</span>
+                                <span style="color: var(--border-color);">|</span>
+                                <span style="color: var(--danger-color);">❌ Wrong: <b id="quizWrongCount" style="color: var(--text-primary);">0</b> (-1)</span>
+                            </div>
+                        </div>
+
+                        <div class="quiz-mode-select" style="width: 100%; margin-top: 10px;">
+                            <button class="quiz-mode-btn active" data-mode="defToWordChoice">📖 Definition ➔ Select Word</button>
+                            <button class="quiz-mode-btn" data-mode="fillBlank">✍️ Fill-in SVO Sentence</button>
+                            <button class="quiz-mode-btn" data-mode="englishChoice">🎯 Word ➔ Select Definition</button>
+                        </div>
+                    </div>
+
+                    <div class="quiz-body" id="quizBody">
+                    </div>
+                </section>
+
+                <!-- TAB 3: WRITE PRACTICE (DEFINITION & WORD MODES) -->
+                <section id="writeTab" class="tab-content">
+                    <div class="quiz-header" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+                        <div>
+                            <h2 style="margin: 0;">✍️ Active Recall Write Practice</h2>
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-top: 4px;">Practice active recall by writing definitions OR looking at definitions to recall the exact vocabulary word.</div>
+                        </div>
+
+                        <button class="btn-action" onclick="shuffleAllModes(true)" style="background: var(--accent-gradient); color: #fff; font-weight: 700; border: none; padding: 6px 14px; border-radius: var(--radius-md); cursor: pointer;">🔀 Shuffle Words</button>
+
+                        <!-- Write Practice Mode Selector -->
+                        <div class="quiz-mode-select" style="width: 100%; margin-top: 10px;">
+                            <button class="write-mode-btn active" data-writemode="wordToDef">📖 Mode 1: Word ➔ Write Definition</button>
+                            <button class="write-mode-btn" data-writemode="defToWord">🎯 Mode 2: Definition ➔ Type Word</button>
+                        </div>
+                    </div>
+
+                    <div class="write-body" id="writeBody">
+                        <!-- Dynamic Write Card inserted by JS -->
+                    </div>
+                </section>
+
+            <!-- TAB 5: STUDY REPORT & STATISTICS -->
+            <section id="reportTab" class="tab-content">
+                <div class="report-container" style="max-width: 1100px; margin: 0 auto;">
+                    <!-- Report Top Header & Controls -->
+                    <div class="report-header" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; background: var(--card-bg); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+                        <div>
+                            <h2 style="margin: 0; font-size: 22px; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                                📊 Study Analytics & Performance Report
+                            </h2>
+                            <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-secondary);">
+                                Track detailed learning progress via dynamic combo charts & daily performance tables
+                            </p>
+                        </div>
+                        <div class="report-filter-controls" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <label style="font-weight: 700; font-size: 13px; color: var(--text-primary);">📅 Select Year:</label>
+                            <select id="reportYearSelect" class="styled-select" style="padding: 6px 12px; min-width: 100px;">
+                                <!-- Year options generated by JS -->
+                            </select>
+                            <button id="resetLogDataBtn" class="btn-secondary" style="background: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.3); padding: 6px 12px; font-size: 12px; cursor: pointer;" title="Reset all learning logs">🗑️ Reset Analytics Data</button>
+                        </div>
+                    </div>
+
+                    <!-- ACTIVITY HEATMAP CALENDAR CARD (GitHub / LeetCode Style) -->
+                    <div class="activity-heatmap-card" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 26px; box-shadow: var(--card-shadow);">
+                        
+                        <!-- Header with Month & Year Selectors -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; border-bottom: 1px dashed var(--border-color); padding-bottom: 14px;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 19px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                                    🔥 Study Activity Heatmap Calendar
+                                </h3>
+                                <span style="font-size: 12.5px; color: var(--text-secondary);">Track daily learning score intensity by month (GitHub / LeetCode style)</span>
+                            </div>
+                            
+                            <!-- Month Navigation Bar -->
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <button onclick="navigateHeatmapMonth(-1)" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">◀ Prev</button>
+                                <select id="heatmapMonthSelect" onchange="renderActivityHeatmap()" style="padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 13px; font-weight: 700; cursor: pointer;">
+                                    <option value="0">January</option>
+                                    <option value="1">February</option>
+                                    <option value="2">March</option>
+                                    <option value="3">April</option>
+                                    <option value="4">May</option>
+                                    <option value="5">June</option>
+                                    <option value="6">July</option>
+                                    <option value="7">August</option>
+                                    <option value="8" selected>September</option>
+                                    <option value="9">October</option>
+                                    <option value="10">November</option>
+                                    <option value="11">December</option>
+                                </select>
+                                <select id="heatmapYearSelect" onchange="renderActivityHeatmap()" style="padding: 6px 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 13px; font-weight: 700; cursor: pointer;">
+                                    <option value="2026" selected>2026</option>
+                                    <option value="2025">2025</option>
+                                </select>
+                                <button onclick="navigateHeatmapMonth(1)" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">Next ▶</button>
+                            </div>
+                        </div>
+
+                        <!-- 12 Month Quick Tab Pills (Click vào tháng nào ra tháng đó) -->
+                        <div id="heatmapMonthTabsBar" style="display: flex; gap: 6px; overflow-x: auto; margin-bottom: 16px; padding-bottom: 6px;">
+                            <!-- JS generated 12 Month Pills (Jan - Dec) -->
+                        </div>
+
+                        <!-- Heatmap Grid View -->
+                        <div id="heatmapGridWrapper" style="overflow-x: auto; padding: 14px; background: rgba(0,0,0,0.02); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                            <!-- JS rendered Calendar Grid -->
+                        </div>
+
+                        <!-- Legend & Summary Footer -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; border-top: 1px dashed var(--border-color); padding-top: 14px; flex-wrap: wrap; gap: 12px;">
+                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">
+                                🎯 <span id="heatmapMonthNameLabel">September 2026</span>: 
+                                Active Days: <b id="heatmapActiveDaysCount" style="color: var(--success-color);">0 days</b> • 
+                                Total Points: <b id="heatmapTotalMonthScore" style="color: var(--warning-color);">0 pts</b>
+                            </div>
+
+                            <!-- Color Intensity Legend (0, <30, <50, <75, <100) -->
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary);">
+                                <span>Less (0 pts)</span>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <div style="width: 16px; height: 16px; border-radius: 4px; background: rgba(148, 163, 184, 0.2); border: 1px solid rgba(148,163,184,0.3);" title="0 pts (No Activity)"></div>
+                                    <div style="width: 16px; height: 16px; border-radius: 4px; background: #9be9a8;" title="<30 pts"></div>
+                                    <div style="width: 16px; height: 16px; border-radius: 4px; background: #40c463;" title="30-49 pts"></div>
+                                    <div style="width: 16px; height: 16px; border-radius: 4px; background: #30a14e;" title="50-74 pts"></div>
+                                    <div style="width: 16px; height: 16px; border-radius: 4px; background: #10b981;" title="75-100+ pts"></div>
+                                </div>
+                                <span>More (100+ pts)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LEITNER 3-BOX SPACED REPETITION DASHBOARD (ENGLISH VERSION) -->
+                    <div class="leitner-dashboard-card" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 26px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);">
+                        
+                        <!-- Dashboard Header -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; border-bottom: 1px dashed rgba(99, 102, 241, 0.25); padding-bottom: 14px;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 19px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 10px;">
+                                    📦 Leitner Memory Boxes (Spaced Repetition)
+                                </h3>
+                                <span style="font-size: 13px; color: var(--text-secondary);">Automatic memory-stage categorization & smart review queue</span>
+                            </div>
+                            
+                            <!-- Live Total Count Badge -->
+                            <span style="font-size: 12.5px; font-weight: 800; color: var(--accent-color); background: rgba(99, 102, 241, 0.12); padding: 6px 12px; border-radius: 20px; border: 1px solid rgba(99, 102, 241, 0.3);">
+                                📊 Total Deck: <b id="leitnerTotalWords">36 Words</b>
+                            </span>
+                        </div>
+
+                        <!-- 3 Leitner Memory Boxes Grid -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px;">
+                            
+                            <!-- BOX 1: DANGER ZONE -->
+                            <div style="background: var(--card-bg); border: 2px solid #ef4444; border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, var(--card-bg) 100%);">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <span style="font-size: 13.5px; font-weight: 800; color: #ef4444; display: flex; align-items: center; gap: 6px;">
+                                            🔴 Box 1: Immediate Review
+                                        </span>
+                                        <span style="font-size: 11px; font-weight: 700; color: #ef4444; background: rgba(239, 68, 68, 0.15); padding: 2px 8px; border-radius: 10px;">Danger Zone</span>
+                                    </div>
+                                    <div id="box1CountText" style="font-size: 34px; font-weight: 800; color: #ef4444; margin-bottom: 4px;">
+                                        6 <span style="font-size: 15px; font-weight: 600; color: var(--text-secondary);">words</span>
+                                    </div>
+                                    <p style="font-size: 12px; color: var(--text-secondary); margin: 0 0 16px 0; line-height: 1.5;">
+                                        Words answered incorrectly within the last 24h. Requires urgent review to fix knowledge gaps.
+                                    </p>
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    <button onclick="openBoxWordListModal(1)" class="btn-secondary" style="width: 100%; padding: 8px; font-size: 12px; font-weight: 700; color: #ef4444; border-color: rgba(239, 68, 68, 0.4); cursor: pointer;">
+                                        📋 Inspect Word List (Box 1)
+                                    </button>
+                                    <button onclick="startLeitnerBoxReview(1)" style="width: 100%; padding: 11px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35); transition: transform 0.15s ease;">
+                                        🚀 Practice Box 1 (6 Weak Words)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- BOX 2: REVIEW PENDING -->
+                            <div style="background: var(--card-bg); border: 2px solid #f59e0b; border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, var(--card-bg) 100%);">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <span style="font-size: 13.5px; font-weight: 800; color: #f59e0b; display: flex; align-items: center; gap: 6px;">
+                                            🟡 Box 2: Scheduled Review
+                                        </span>
+                                        <span style="font-size: 11px; font-weight: 700; color: #f59e0b; background: rgba(245, 158, 11, 0.15); padding: 2px 8px; border-radius: 10px;">Review Pending</span>
+                                    </div>
+                                    <div id="box2CountText" style="font-size: 34px; font-weight: 800; color: #f59e0b; margin-bottom: 4px;">
+                                        12 <span style="font-size: 15px; font-weight: 600; color: var(--text-secondary);">words</span>
+                                    </div>
+                                    <p style="font-size: 12px; color: var(--text-secondary); margin: 0 0 16px 0; line-height: 1.5;">
+                                        Words answered correctly 1-2 times. Scheduled for spaced repetition to move into long-term memory.
+                                    </p>
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    <button onclick="openBoxWordListModal(2)" class="btn-secondary" style="width: 100%; padding: 8px; font-size: 12px; font-weight: 700; color: #f59e0b; border-color: rgba(245, 158, 11, 0.4); cursor: pointer;">
+                                        📋 Inspect Word List (Box 2)
+                                    </button>
+                                    <button onclick="startLeitnerBoxReview(2)" style="width: 100%; padding: 11px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; border: none; border-radius: var(--radius-md); font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); transition: transform 0.15s ease;">
+                                        ⚡ Practice Box 2 (12 Due Words)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- BOX 3: MASTERED & RETAINED -->
+                            <div style="background: var(--card-bg); border: 2px solid #10b981; border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, var(--card-bg) 100%);">
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <span style="font-size: 13.5px; font-weight: 800; color: #10b981; display: flex; align-items: center; gap: 6px;">
+                                            🟢 Box 3: Mastered & Retained
+                                        </span>
+                                        <span style="font-size: 11px; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.15); padding: 2px 8px; border-radius: 10px;">Mastered</span>
+                                    </div>
+                                    <div id="box3CountText" style="font-size: 34px; font-weight: 800; color: #10b981; margin-bottom: 4px;">
+                                        18 <span style="font-size: 15px; font-weight: 600; color: var(--text-secondary);">words</span>
+                                    </div>
+                                    <p style="font-size: 12px; color: var(--text-secondary); margin: 0 0 16px 0; line-height: 1.5;">
+                                        Words answered correctly 3+ consecutive times across different days. Fully retained in memory.
+                                    </p>
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; gap: 6px;">
+                                    <button onclick="openBoxWordListModal(3)" class="btn-secondary" style="width: 100%; padding: 11px; font-size: 13px; font-weight: 800; color: #10b981; border: 1px solid #10b981; border-radius: var(--radius-md); cursor: pointer;">
+                                        📋 Inspect Box 3 (18 Mastered Words)
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Month Buttons Selector -->
+                    <div class="month-selector-bar" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; background: var(--card-bg); padding: 14px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+                        <span style="font-weight: 700; font-size: 13px; align-self: center; margin-right: 8px; color: var(--accent-color);">🗓️ Select Month:</span>
+                        <div id="monthBtnContainer" style="display: flex; flex-wrap: wrap; gap: 6px; flex: 1;">
+                            <!-- 12 Month buttons + All generated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Monthly Quick Stats Summary -->
+                    <div class="report-summary-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
+                        <div class="stat-card-box" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+                            <div style="font-size: 13px; color: var(--text-secondary);">🎯 Multiple Choice Quiz</div>
+                            <div id="summaryQuizTotal" style="font-size: 24px; font-weight: 800; color: var(--accent-color); margin-top: 4px;">0 Cards</div>
+                            <div id="summaryQuizScore" style="font-size: 12px; color: var(--success-color); margin-top: 2px;">Score: 0 ⭐ (0% accuracy)</div>
+                        </div>
+                        <div class="stat-card-box" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+                            <div style="font-size: 13px; color: var(--text-secondary);">✍️ Write Practice</div>
+                            <div id="summaryWriteTotal" style="font-size: 24px; font-weight: 800; color: #ec4899; margin-top: 4px;">0 Words</div>
+                            <div id="summaryWriteScore" style="font-size: 12px; color: var(--success-color); margin-top: 2px;">Score: 0 ⭐ (0% accuracy)</div>
+                        </div>
+                        <div class="stat-card-box" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+                            <div style="font-size: 13px; color: var(--text-secondary);">📅 Active Study Days</div>
+                            <div id="summaryActiveDays" style="font-size: 24px; font-weight: 800; color: var(--warning-color); margin-top: 4px;">0 Days</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">In selected period</div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 1: QUIZ PERFORMANCE -->
+                    <div class="report-section-box" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h3 style="margin: 0; color: var(--accent-color); font-size: 18px;">
+                                🎯 1. Multiple Choice Quiz Analytics
+                            </h3>
+                            <div style="display: flex; gap: 12px; font-size: 12px; flex-wrap: wrap;">
+                                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:12px; height:3px; background:#10b981; border-radius:2px;"></span> 📈 <b>Correct</b> (Line)</span>
+                                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#ef4444; border-radius:2px;"></span> 📊 <b>Wrong</b> (Bar)</span>
+                                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#6366f1; border-radius:2px;"></span> 📊 <b>Total Cards</b> (Bar)</span>
+                                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#f59e0b; border-radius:2px;"></span> 📊 ⭐ <b>Score</b> (Bar)</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                            Combo Chart: <b>Correct (Green Line)</b>, <b>Wrong (Red Bar)</b>, <b>Total Cards (Indigo Bar)</b>, <b>Score (Yellow Bar)</b>
+                        </p>
+
+                        <!-- Chart Container Quiz -->
+                        <div class="chart-wrapper-box" style="overflow-x: auto; padding: 10px 0; margin-bottom: 20px;">
+                            <div class="chart-outer-box">
+                                <div id="quizYAxis" class="chart-y-axis"></div>
+                                <div id="quizBarChart" class="custom-bar-chart">
+                                    <!-- Dynamic CSS Bars & SVG Line rendered by JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Data Table Quiz -->
+                        <h4 style="margin: 20px 0 10px 0; font-size: 15px;">📋 Multiple Choice Performance Table:</h4>
+                        <div class="table-wrapper">
+                            <table class="vocab-table">
+                                <thead>
+                                    <tr>
+                                        <th>📅 Date</th>
+                                        <th>🎴 Cards Practiced</th>
+                                        <th>⭐ Quiz Score</th>
+                                        <th>✅ Correct Count</th>
+                                        <th>❌ Wrong Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="quizReportTableBody">
+                                    <!-- Rows rendered by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: WRITE PRACTICE -->
+                    <div class="report-section-box" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h3 style="margin: 0; color: #ec4899; font-size: 18px;">
+                                ✍️ 2. Write Practice Analytics
+                            </h3>
+                            <div style="display: flex; gap: 12px; font-size: 12px; flex-wrap: wrap;">
+                                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:12px; height:3px; background:#10b981; border-radius:2px;"></span> 📈 <b>Correct</b> (Line)</span>
+                                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#ef4444; border-radius:2px;"></span> 📊 <b>Wrong</b> (Bar)</span>
+                                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#ec4899; border-radius:2px;"></span> 📊 <b>Total Words</b> (Bar)</span>
+                                <span style="display:flex; align-items:center; gap:4px;"><span style="display:inline-block; width:10px; height:10px; background:#f59e0b; border-radius:2px;"></span> 📊 ⭐ <b>Score</b> (Bar)</span>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                            Combo Chart: <b>Correct (Green Line)</b>, <b>Wrong (Red Bar)</b>, <b>Total Words (Pink Bar)</b>, <b>Score (Yellow Bar)</b>
+                        </p>
+
+                        <!-- Chart Container Write -->
+                        <div class="chart-wrapper-box" style="overflow-x: auto; padding: 10px 0; margin-bottom: 20px;">
+                            <div class="chart-outer-box">
+                                <div id="writeYAxis" class="chart-y-axis"></div>
+                                <div id="writeBarChart" class="custom-bar-chart">
+                                    <!-- Dynamic CSS Bars rendered by JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Data Table Write -->
+                        <h4 style="margin: 20px 0 10px 0; font-size: 15px;">📋 Write Practice Performance Table:</h4>
+                        <div class="table-wrapper">
+                            <table class="vocab-table">
+                                <thead>
+                                    <tr>
+                                        <th>📅 Date</th>
+                                        <th>✍️ Words Practiced</th>
+                                        <th>⭐ Write Score</th>
+                                        <th>✅ Correct Count</th>
+                                        <th>❌ Wrong Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="writeReportTableBody">
+                                    <!-- Rows rendered by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: MOST FREQUENTLY MISTAKEN WORDS -->
+                    <div class="report-section-box" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                            <h3 style="margin: 0; color: var(--danger-color); font-size: 18px;">
+                                ⚠️ 3. Most Frequently Mistaken Words (Weak Words Needing Review)
+                            </h3>
+                            <span style="font-size: 12px; color: var(--text-secondary);">Tracked in real-time across Quiz & Write Practice</span>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                            Vocabulary terms where you have accumulated the most errors. Focus on reviewing these to boost accuracy!
+                        </p>
+
+                        <!-- Data Table Mistaken Words -->
+                        <div class="table-wrapper">
+                            <table class="vocab-table">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Word & Phonetics</th>
+                                        <th>Meaning & Synonyms</th>
+                                        <th>❌ Total Errors</th>
+                                        <th>🎯 Accuracy Rate</th>
+                                        <th>⚡ Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mistakenWordsTableBody">
+                                    <!-- Rows rendered by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: ALL WORDS TABLE -->
+            <section id="tableTab" class="tab-content">
+                <div class="table-header">
+                    <h2>📖 Article Vocabulary Table</h2>
+                    <input type="text" id="searchInput" placeholder="🔍 Search vocabulary, definition, or grammar..." class="styled-input">
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="vocab-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Word</th>
+                                <th>Phonetics</th>
+                                <th>Meaning & Synonyms</th>
+                                <th>Sample SVO Sentence</th>
+                                <th>Translation</th>
+                                <th>Grammar</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vocabTableBody">
+                            <!-- Table rows inserted by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 4: EXPORT ANKI -->
+            <section id="exportTab" class="tab-content">
+                <div class="export-card">
+                    <h2>📥 Export Learning Data (Anki / Excel CSV)</h2>
+                    <p>Export all 7-column article vocabulary data into 100% compatible CSV for **Anki Spaced Repetition** or **Microsoft Excel**.</p>
+                    
+                    <div class="export-options">
+                        <button id="downloadAnkiCsvBtn" class="btn-primary">⚡ Download Anki CSV</button>
+                        <button id="downloadJsonBtn" class="btn-secondary">📄 Download Full JSON</button>
+                    </div>
+
+                    <div class="anki-guide">
+                        <h3>📖 Anki Import Guide:</h3>
+                        <ol>
+                            <li>Click <b>Download Anki CSV</b> above to download the file.</li>
+                            <li>Open <b>Anki</b> app $\rightarrow$ Click <b>File</b> $\rightarrow$ <b>Import</b> (or `Ctrl + I`).</li>
+                            <li>Select the downloaded CSV file.</li>
+                            <li>Map fields: <i>Front = Word + IPA</i>, <i>Back = Meaning + SVO Sentence + Grammar</i>.</li>
+                        </ol>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    </div>
+
+    <!-- Gmail Connect Custom Modal -->
+    <div id="gmailModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(8px); z-index: 9999999; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); width: 90%; max-width: 400px; padding: 24px; box-shadow: var(--card-shadow); text-align: center; color: var(--text-primary);">
+            <div style="width: 48px; height: 48px; background: rgba(99, 102, 241, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; font-size: 24px;">
+                🔑
+            </div>
+            <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 800; color: var(--text-primary);">Kết Nối Gmail Cloud Sync</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
+                Nhập tài khoản Gmail của bạn để kết nối đồng bộ dữ liệu tiến độ (Level 3 - 300 XP) giữa Máy tính & Điện thoại!
+            </p>
+
+            <div style="margin-bottom: 20px; text-align: left;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 6px;">Địa chỉ Gmail của bạn:</label>
+                <input type="email" id="gmailModalInput" value="doantuan@gmail.com" placeholder="example@gmail.com" style="width: 100%; padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 14px; font-weight: 600; outline: none;">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="closeGmailModal()" class="btn-secondary" style="flex: 1; padding: 10px; font-weight: 600; cursor: pointer;">Hủy</button>
+                <button onclick="confirmGmailConnect()" style="flex: 1.5; padding: 10px; background: var(--accent-gradient); color: #fff; border: none; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);">🚀 Kết Nối Gmail</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEITNER WORD LIST MODAL -->
+    <div id="boxWordListModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 9999999; align-items: center; justify-content: center;">
+        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-lg); width: 92%; max-width: 760px; max-height: 85vh; display: flex; flex-direction: column; padding: 24px; box-shadow: var(--card-shadow); color: var(--text-primary);">
+            
+            <!-- Modal Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px dashed var(--border-color); padding-bottom: 12px;">
+                <div>
+                    <h3 id="modalBoxTitle" style="margin: 0; font-size: 19px; font-weight: 800; color: var(--text-primary);">📋 Leitner Box Word List</h3>
+                    <span id="modalBoxSubtitle" style="font-size: 12.5px; color: var(--text-secondary);">Specific vocabulary terms categorized in this memory box</span>
+                </div>
+                <button onclick="closeBoxWordListModal()" style="background: rgba(239,68,68,0.15); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; color: var(--danger-color); cursor: pointer; display: flex; align-items: center; justify-content: center;">✖</button>
+            </div>
+
+            <!-- Word List Scroll Area -->
+            <div style="flex: 1; overflow-y: auto; margin-bottom: 20px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <table class="vocab-table" style="width: 100%; margin: 0;">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Word & IPA</th>
+                            <th>English Definition & Meaning</th>
+                            <th>Errors</th>
+                            <th>Memory Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalBoxTableBody">
+                        <!-- Rows dynamically generated by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Modal Footer Actions -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end; align-items: center;">
+                <button onclick="closeBoxWordListModal()" class="btn-secondary" style="padding: 10px 18px; font-weight: 700; cursor: pointer;">Close</button>
+                <button id="modalActionStartBtn" onclick="startPracticeFromModal()" style="padding: 11px 22px; background: var(--accent-gradient); color: #fff; border: none; border-radius: var(--radius-md); font-weight: 800; cursor: pointer; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);">
+                    🎯 Start Practice For These Words
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- WEB FOLDER LIBRARY MODAL -->
+    <div id="webFolderLibraryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); z-index: 9999999; align-items: center; justify-content: center;">
+        <div style="background: #ffffff; border: 2px solid #cbd5e1; border-radius: var(--radius-lg); width: 92%; max-width: 720px; max-height: 85vh; display: flex; flex-direction: column; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); color: #0f172a;">
+            
+            <!-- Modal Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 14px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                        📁 Web Directory Library (Thư Mục Bài Đọc Trên Web)
+                    </h3>
+                    <span style="font-size: 13px; color: #475569; font-weight: 500;">Chọn bài đọc để bắt đầu học (Lưu tại thư mục Read Article/Results/):</span>
+                </div>
+                <button onclick="closeWebFolderLibraryModal()" style="background: #fee2e2; border: 1px solid #fca5a5; border-radius: 50%; width: 34px; height: 34px; font-size: 18px; color: #dc2626; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 800;">✖</button>
+            </div>
+
+            <!-- Directory Articles List Scroll Container -->
+            <div id="webFolderArticlesList" style="flex: 1; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; padding-right: 4px;">
+                <!-- Rendered dynamically by JS -->
+            </div>
+
+            <!-- Footer -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 14px;">
+                <span style="font-size: 12.5px; color: #475569; font-weight: 600;">📁 Thư mục Web: <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #0f172a;">Read Article/Results/</code></span>
+                <button onclick="closeWebFolderLibraryModal()" style="padding: 10px 22px; background: #e2e8f0; color: #0f172a; border: 1px solid #cbd5e1; border-radius: var(--radius-md); font-weight: 800; font-size: 14px; cursor: pointer;">Đóng (Close)</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MANUAL TEXT INPUT MODAL -->
+    <div id="manualInputModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 9999999; align-items: center; justify-content: center;">
+        <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--radius-lg); width: 92%; max-width: 720px; max-height: 85vh; display: flex; flex-direction: column; padding: 24px; box-shadow: var(--card-shadow); color: var(--text-primary);">
+            
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px dashed var(--border-color); padding-bottom: 12px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 19px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                        ✍️ Manual Vocabulary Input / Paste Markdown
+                    </h3>
+                    <span style="font-size: 12.5px; color: var(--text-secondary);">Paste your 7-column markdown table text or vocabulary list directly below!</span>
+                </div>
+                <button onclick="closeManualInputModal()" style="background: rgba(239,68,68,0.15); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; color: var(--danger-color); cursor: pointer; display: flex; align-items: center; justify-content: center;">✖</button>
+            </div>
+
+            <!-- Inputs -->
+            <div style="margin-bottom: 14px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 4px;">Lesson Title / Article Name:</label>
+                <input type="text" id="manualTitleInput" placeholder="e.g. My_Custom_Topic.md" style="width: 100%; padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 14px; outline: none;">
+            </div>
+
+            <div style="flex: 1; display: flex; flex-direction: column; margin-bottom: 16px;">
+                <label style="font-size: 12px; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 4px;">Paste Markdown Table Content:</label>
+                <textarea id="manualContentTextarea" placeholder="| No | Từ vựng | Phiên âm | Nghĩa | Câu chứa từ | Dịch câu | Giải thích ngữ pháp |&#10;| 1 | happy | /ˈhæp.i/ | Hạnh phúc - Happy SVO - (joyful / glad) | She felt happy today. | Cô ấy cảm thấy hạnh phúc hôm nay. | Cấu trúc feel + Adj. |" style="flex: 1; min-height: 220px; padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-family: monospace; font-size: 13px; line-height: 1.5; resize: none; outline: none;"></textarea>
+            </div>
+
+            <!-- Footer -->
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="closeManualInputModal()" class="btn-secondary" style="padding: 10px 18px; font-weight: 700; cursor: pointer;">Cancel</button>
+                <button onclick="saveAndStudyManualInput()" style="padding: 11px 22px; background: var(--accent-gradient); color: #fff; border: none; border-radius: var(--radius-md); font-weight: 800; cursor: pointer; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);">
+                    🚀 Save & Study This Lesson
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="app.js?v=20260905_1338"></script>
+</body>
+</html>
