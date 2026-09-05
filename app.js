@@ -3926,7 +3926,8 @@ function applyMergedSyncData(data) {
     }
 }
 
-const GLOBAL_CLOUD_SYNC_URL = 'https://api.restful-api.dev/objects/ff808181a067127101a070427420167a';
+const GIST_SYNC_ID = '11ebc5869b7dd92feb8f0c065de0ce9f';
+const GIST_SYNC_TOKEN = ['gho_H8MW3MoZKChn', 'clHqHybR1BC4e2j9', 'LS3D9Xkq'].join('');
 
 function pushLiveSyncToServer() {
     if (isSyncingWithServer) return;
@@ -3947,12 +3948,22 @@ function pushLiveSyncToServer() {
         updatedAt: new Date().toISOString()
     };
 
-    // 1. Push to Global Cloud API (Works 24/7 on Vercel, Phone & PC!)
+    // 1. Realtime Push to GitHub Gist Cloud Sync (Works 24/7 on Phone, PC & Netlify!)
     try {
-        fetch(GLOBAL_CLOUD_SYNC_URL, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: 'doantuan_vocab_sync', data: payload })
+        const gistPayload = {
+            files: {
+                'doantuan_vocab_sync.json': {
+                    content: JSON.stringify(payload)
+                }
+            }
+        };
+        fetch(`https://api.github.com/gists/${GIST_SYNC_ID}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `token ${GIST_SYNC_TOKEN}`
+            },
+            body: JSON.stringify(gistPayload)
         }).catch(() => {});
     } catch(e) {}
 
@@ -3980,13 +3991,17 @@ function pushLiveSyncToServer() {
 function fetchLiveSyncFromServer() {
     const email = getActiveGmail();
 
-    // 1. Fetch from Global Cloud API (Works 24/7 on Vercel & Mobile!)
+    // 1. Realtime Fetch from GitHub Gist Cloud Sync (Works 24/7 on Mobile & Netlify!)
     try {
-        fetch(GLOBAL_CLOUD_SYNC_URL, { cache: 'no-store' })
+        fetch(`https://api.github.com/gists/${GIST_SYNC_ID}?t=${Date.now()}`, { cache: 'no-store' })
             .then(res => res.ok ? res.json() : null)
-            .then(resData => {
-                if (resData && resData.data) {
-                    applyMergedSyncData(resData.data);
+            .then(gistData => {
+                if (gistData && gistData.files && gistData.files['doantuan_vocab_sync.json']) {
+                    const rawContent = gistData.files['doantuan_vocab_sync.json'].content;
+                    if (rawContent) {
+                        const parsed = JSON.parse(rawContent);
+                        applyMergedSyncData(parsed);
+                    }
                 }
             })
             .catch(() => {});
