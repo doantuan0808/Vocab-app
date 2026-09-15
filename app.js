@@ -2239,6 +2239,21 @@ function setupArticleSelect() {
     const customArticles = getCustomArticles();
     const deletedFiles = getDeletedArticles();
 
+    // Auto populate built-in catalog articles if not deleted
+    if (typeof BUILTIN_CATALOG !== 'undefined' && Array.isArray(BUILTIN_CATALOG)) {
+        BUILTIN_CATALOG.forEach(art => {
+            if (!deletedFiles.includes(art.filename)) {
+                let existing = Array.from(select.options).find(opt => opt.value === art.filename);
+                if (!existing) {
+                    const opt = document.createElement('option');
+                    opt.value = art.filename;
+                    opt.textContent = art.title || art.filename.replace(/\.md$/i, '').replace(/_/g, ' ');
+                    select.appendChild(opt);
+                }
+            }
+        });
+    }
+
     // Re-populate custom imported articles into dropdown if not deleted
     Object.keys(customArticles).forEach(fileName => {
         if (!deletedFiles.includes(fileName)) {
